@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Water Monitor</title>
+</head>
+<body>
+
+<h2>ESP32 Water Level</h2>
+
+<h1 id="water">Loading...</h1>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+  // Firebase Config
+  const firebaseConfig = {
+    databaseURL: "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  const db = firebase.database();
+
+  // Read water value
+  db.ref("/Water").on("value", (snapshot) => {
+    document.getElementById("water").innerHTML = snapshot.val();
+  });
+
+</script>
+
+</body>
+</html>
