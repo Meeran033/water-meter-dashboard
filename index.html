@@ -1,33 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Water Monitor</title>
+  <title>ESP32 Water Dashboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      color: white;
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 30px;
+      font-size: 28px;
+    }
+
+    .card {
+      width: 250px;
+      margin: 50px auto;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    #water {
+      font-size: 60px;
+      font-weight: bold;
+      color: #fff700;
+    }
+
+    .label {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>ESP32 Water Level</h2>
+  <h2>💧 ESP32 Water Monitoring System</h2>
 
-<h1 id="water">Loading...</h1>
+  <div class="card">
+    <div id="water">Loading...</div>
+    <div class="label">Liters Used</div>
+  </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <div class="footer">
+    Real-time data from Firebase 🔥
+  </div>
 
-<script>
-  // Firebase Config
-  const firebaseConfig = {
-    databaseURL: "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
-  };
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  firebase.initializeApp(firebaseConfig);
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      databaseURL: "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
 
-  const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  // Read water value
-  db.ref("/Water").on("value", (snapshot) => {
-    document.getElementById("water").innerHTML = snapshot.val();
-  });
-
-</script>
+    // Live Water Data
+    db.ref("/Water").on("value", (snapshot) => {
+      document.getElementById("water").innerHTML = snapshot.val();
+    });
+  </script>
 
 </body>
 </html>
