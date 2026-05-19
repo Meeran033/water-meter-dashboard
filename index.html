@@ -1,48 +1,66 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>ESP32 Water Dashboard</title>
+  <title>ESP32 Smart Water Dashboard</title>
 
   <style>
     body {
       margin: 0;
       font-family: Arial;
-      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      background: linear-gradient(135deg, #141e30, #243b55);
       color: white;
       text-align: center;
     }
 
-    h2 {
-      margin-top: 30px;
-      font-size: 28px;
+    h1 {
+      padding-top: 20px;
+      font-size: 35px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 30px;
     }
 
     .card {
       width: 250px;
-      margin: 50px auto;
-      padding: 30px;
-      background: rgba(255, 255, 255, 0.2);
+      padding: 25px;
       border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.1);
       backdrop-filter: blur(10px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     }
 
-    #water {
-      font-size: 60px;
+    .title {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .value {
+      font-size: 50px;
       font-weight: bold;
-      color: #fff700;
+      color: #00ffcc;
     }
 
-    .label {
-      font-size: 18px;
-      margin-top: 10px;
+    .alertON {
+      color: red;
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    .alertOFF {
+      color: lime;
+      font-size: 30px;
+      font-weight: bold;
     }
 
     .footer {
-      position: fixed;
-      bottom: 10px;
-      width: 100%;
-      font-size: 12px;
+      margin-top: 30px;
+      padding-bottom: 20px;
       opacity: 0.7;
     }
   </style>
@@ -50,33 +68,92 @@
 
 <body>
 
-  <h2>💧 ESP32 Water Monitoring System</h2>
+  <h1>💧 Smart Water Monitoring Dashboard</h1>
 
-  <div class="card">
-    <div id="water">Loading...</div>
-    <div class="label">Liters Used</div>
+  <div class="container">
+
+    <div class="card">
+      <div class="title">Water Meter 1</div>
+      <div class="value" id="water">0</div>
+    </div>
+
+    <div class="card">
+      <div class="title">Water Meter 2</div>
+      <div class="value" id="water1">0</div>
+    </div>
+
+    <div class="card">
+      <div class="title">Water Meter 3</div>
+      <div class="value" id="water2">0</div>
+    </div>
+
+    <div class="card">
+      <div class="title">Monthly Usage</div>
+      <div class="value" id="monthly">0</div>
+    </div>
+
+    <div class="card">
+      <div class="title">Alert Status</div>
+      <div id="alert" class="alertOFF">NORMAL</div>
+    </div>
+
   </div>
 
   <div class="footer">
-    Real-time data from Firebase 🔥
+    Firebase Real-time Smart Water System 🚀
   </div>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
+
     // Firebase Config
     const firebaseConfig = {
       databaseURL: "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
 
     firebase.initializeApp(firebaseConfig);
+
     const db = firebase.database();
 
-    // Live Water Data
-    db.ref("/Water").on("value", (snapshot) => {
+    // Live Water Values
+    db.ref("/live/Water").on("value", (snapshot) => {
       document.getElementById("water").innerHTML = snapshot.val();
     });
+
+    db.ref("/live/Water1").on("value", (snapshot) => {
+      document.getElementById("water1").innerHTML = snapshot.val();
+    });
+
+    db.ref("/live/Water2").on("value", (snapshot) => {
+      document.getElementById("water2").innerHTML = snapshot.val();
+    });
+
+    // Monthly Usage
+    db.ref("/monthly/2026/05/Water").on("value", (snapshot) => {
+      document.getElementById("monthly").innerHTML = snapshot.val();
+    });
+
+    // Alert Status
+    db.ref("/alert/status").on("value", (snapshot) => {
+
+      const status = snapshot.val();
+
+      if (status == 1) {
+
+        document.getElementById("alert").innerHTML = "LIMIT REACHED";
+        document.getElementById("alert").className = "alertON";
+
+      } else {
+
+        document.getElementById("alert").innerHTML = "NORMAL";
+        document.getElementById("alert").className = "alertOFF";
+      }
+
+    });
+
   </script>
 
 </body>
