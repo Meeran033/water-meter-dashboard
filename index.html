@@ -5,10 +5,9 @@
   <title>ESP32 Smart Water Dashboard</title>
 
   <style>
-
     body {
       margin: 0;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #141e30, #243b55);
       color: white;
       text-align: center;
@@ -31,9 +30,9 @@
       width: 250px;
       padding: 25px;
       border-radius: 20px;
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     }
 
     .title {
@@ -42,7 +41,7 @@
     }
 
     .value {
-      font-size: 50px;
+      font-size: 45px;
       font-weight: bold;
       color: #00ffcc;
     }
@@ -54,7 +53,7 @@
     }
 
     .alertON {
-      color: red;
+      color: #ff3333;
       font-size: 30px;
       font-weight: bold;
     }
@@ -71,9 +70,9 @@
       margin: 30px auto;
       padding: 30px;
       border-radius: 20px;
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     }
 
     canvas {
@@ -87,7 +86,6 @@
       padding-bottom: 20px;
       opacity: 0.7;
     }
-
   </style>
 </head>
 
@@ -97,37 +95,31 @@
 
   <div class="container">
 
-    <!-- Water 1 -->
     <div class="card">
-      <div class="title">Live Usage</div>
-      <div class="value" id="flowRate">0</div>
+      <div class="title">Live Flow Rate</div>
+      <div class="value"><span id="flowRate">0</span> <span style="font-size: 20px;">L/m</span></div>
     </div>
 
-    <!-- Water 2 -->
     <div class="card">
       <div class="title">Total Usage</div>
-      <div class="value" id="totalLiters">0</div>
+      <div class="value"><span id="totalLiters">0</span> <span style="font-size: 20px;">L</span></div>
     </div>
 
-    <!-- Water 3 -->
     <div class="card">
-      <div class="title">Water Meter 3</div>
+      <div class="title">Water Meter 2</div>
       <div class="value" id="water2">0</div>
     </div>
 
-    <!-- Monthly -->
     <div class="card">
       <div class="title">Monthly Usage</div>
-      <div class="value" id="monthly">0</div>
+      <div class="value"><span id="monthly">0</span> <span style="font-size: 20px;">L</span></div>
     </div>
 
-    <!-- Alert -->
     <div class="card">
       <div class="title">Alert Status</div>
       <div id="alert" class="alertOFF">NORMAL</div>
     </div>
 
-    <!-- Date Time -->
     <div class="card">
       <div class="title">Date & Time</div>
       <div id="datetime" class="timeValue">
@@ -137,178 +129,126 @@
 
   </div>
 
-  <!-- Graph -->
   <div class="graphCard">
-
-    <div class="title">📈 Live Water Usage Graph</div>
-
+    <div class="title">📈 Live Water Flow Graph</div>
     <canvas id="waterChart"></canvas>
-
   </div>
 
   <div class="footer">
     Firebase Real-time Smart Water System 🚀
   </div>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-
     // Firebase Config
     const firebaseConfig = {
-
-      databaseURL:
-      "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
-
+      databaseURL: "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
 
     firebase.initializeApp(firebaseConfig);
-
     const db = firebase.database();
 
     // ---------------- DATE & TIME ----------------
-
     function updateDateTime() {
-
       const now = new Date();
-
       document.getElementById("datetime").innerHTML =
-
-        now.toLocaleDateString() +
-
-        "<br>" +
-
-        now.toLocaleTimeString();
+        now.toLocaleDateString() + "<br>" + now.toLocaleTimeString();
     }
-
     setInterval(updateDateTime, 1000);
-
     updateDateTime();
 
-    // ---------------- WATER VALUES ----------------
+    // ---------------- WATER VALUES (SYNCED PATHS) ----------------
 
-    db.ref("/live/Water").on("value", (snapshot) => {
-
-      const value = snapshot.val();
-
-      document.getElementById("flowRate").innerHTML = value;
-
-      addGraphData(value);
-
+    // 1. Live Flow Rate
+    db.ref("/live/flowRate").on("value", (snapshot) => {
+      const val = snapshot.val() !== null ? snapshot.val() : 0;
+      // If ESP code passes floats, format it cleanly to 1 decimal place
+      const formattedVal = typeof val === 'number' ? val.toFixed(1) : val;
+      document.getElementById("flowRate").innerHTML = formattedVal;
+      addGraphData(val);
     });
 
-    db.ref("/live/Water1").on("value", (snapshot) => {
-
-      document.getElementById("totalLiters").innerHTML =
-        snapshot.val();
-
+    // 2. Total Liters
+    db.ref("/live/totalLiters").on("value", (snapshot) => {
+      const val = snapshot.val() !== null ? snapshot.val() : 0;
+      const formattedVal = typeof val === 'number' ? val.toFixed(3) : val;
+      document.getElementById("totalLiters").innerHTML = formattedVal;
     });
 
+    // 3. Water Meter 2
     db.ref("/live/Water2").on("value", (snapshot) => {
-
-      document.getElementById("water2").innerHTML =
-        snapshot.val();
-
+      document.getElementById("water2").innerHTML = snapshot.val() !== null ? snapshot.val() : 0;
     });
 
-    // ---------------- MONTHLY ----------------
+    // ---------------- MONTHLY (DYNAMIC AUTO-PATHING) ----------------
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = String(now.getMonth() + 1).padStart(2, '0'); // Formats to '07', '08', etc.
 
-    db.ref("/monthly/2026/05/Water").on("value", (snapshot) => {
-
-      document.getElementById("monthly").innerHTML =
-        snapshot.val();
-
+    db.ref(`/monthly/${currentYear}/${currentMonth}/totalLiters`).on("value", (snapshot) => {
+      document.getElementById("monthly").innerHTML = snapshot.val() !== null ? snapshot.val() : 0;
     });
 
-    // ---------------- ALERT ----------------
-
+    // ---------------- ALERT STATUS ----------------
     db.ref("/alert/status").on("value", (snapshot) => {
-
       const status = snapshot.val();
+      const alertDiv = document.getElementById("alert");
 
       if (status == 1) {
-
-        document.getElementById("alert").innerHTML =
-          "LIMIT REACHED";
-
-        document.getElementById("alert").className =
-          "alertON";
-
+        alertDiv.innerHTML = "LIMIT REACHED";
+        alertDiv.className = "alertON";
       } else {
-
-        document.getElementById("alert").innerHTML =
-          "NORMAL";
-
-        document.getElementById("alert").className =
-          "alertOFF";
+        alertDiv.innerHTML = "NORMAL";
+        alertDiv.className = "alertOFF";
       }
-
     });
 
-    // ---------------- GRAPH ----------------
-
+    // ---------------- CHART.JS SETUP ----------------
     const ctx = document.getElementById('waterChart');
-
     const waterChart = new Chart(ctx, {
-
       type: 'line',
-
       data: {
-
         labels: [],
-
         datasets: [{
-
-          label: 'Water Usage',
-
+          label: 'Flow Rate (L/min)',
           data: [],
-
+          borderColor: '#00ffcc',
+          backgroundColor: 'rgba(0, 255, 204, 0.1)',
           borderWidth: 3,
-
-          tension: 0.4
-
+          tension: 0.4,
+          fill: true
         }]
       },
-
       options: {
-
         responsive: true,
-
         scales: {
-
           y: {
-
-            beginAtZero: true
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Liters / Min'
+            }
           }
         }
       }
     });
 
     function addGraphData(value) {
-
-      const time = new Date().toLocaleTimeString();
-
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       waterChart.data.labels.push(time);
-
       waterChart.data.datasets[0].data.push(value);
 
-      // Keep only last 10 values
+      // Keep only last 10 ticks for readability
       if (waterChart.data.labels.length > 10) {
-
         waterChart.data.labels.shift();
-
         waterChart.data.datasets[0].data.shift();
       }
-
       waterChart.update();
     }
-
   </script>
 
 </body>
