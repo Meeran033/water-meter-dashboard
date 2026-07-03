@@ -99,14 +99,14 @@
 
     <!-- Water 1 -->
     <div class="card">
-      <div class="title">Water Meter 1</div>
-      <div class="value" id="water">0</div>
+      <div class="title">Live Usage</div>
+      <div class="value" id="flowRate">0</div>
     </div>
 
     <!-- Water 2 -->
     <div class="card">
-      <div class="title">Water Meter 2</div>
-      <div class="value" id="water1">0</div>
+      <div class="title">Total Usage</div>
+      <div class="value" id="totalLiters">0</div>
     </div>
 
     <!-- Water 3 -->
@@ -197,7 +197,7 @@
 
       const value = snapshot.val();
 
-      document.getElementById("water").innerHTML = value;
+      document.getElementById("flowRate").innerHTML = value;
 
       addGraphData(value);
 
@@ -205,7 +205,7 @@
 
     db.ref("/live/Water1").on("value", (snapshot) => {
 
-      document.getElementById("water1").innerHTML =
+      document.getElementById("totalLiters").innerHTML =
         snapshot.val();
 
     });
