@@ -120,7 +120,7 @@
       font-size: 28px; font-weight: 700;
       line-height: 1;
       background: linear-gradient(135deg, #fff 60%, var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .kpi-unit { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .kpi-badge {
@@ -208,6 +208,59 @@
     .alert-status-icon { font-size: 48px; margin-bottom: 8px; }
     .alert-status-text { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
     .alert-status-sub  { font-size: 12px; color: var(--muted); }
+
+    /* ── ACTION BUTTONS (Recheck / Relay) ── */
+    .action-row {
+      display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
+    }
+    .action-btn {
+      flex: 1; min-width: 120px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: .3px;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .action-btn:active { transform: scale(.97); }
+    .btn-recheck {
+      background: rgba(0,180,255,.12);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-recheck:hover { background: rgba(0,180,255,.22); }
+    .btn-block {
+      background: rgba(255,59,92,.12);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .btn-block:hover { background: rgba(255,59,92,.22); }
+    .btn-open {
+      background: rgba(0,230,118,.12);
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+    .btn-open:hover { background: rgba(0,230,118,.22); }
+
+    .relay-status-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .relay-status-label { font-size: 12px; color: var(--muted); }
+    .relay-status-pill {
+      font-size: 11px; font-weight: 700; padding: 4px 10px;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .pill-open   { background: rgba(0,230,118,.15); color: var(--ok); }
+    .pill-block  { background: rgba(255,59,92,.15); color: var(--danger); }
+    .pill-unknown{ background: rgba(107,140,174,.15); color: var(--muted); }
 
     /* ── BOTTOM GRID ── */
     .bottom-grid {
@@ -372,6 +425,21 @@
           <div class="alert-status-icon" id="alertIcon">✅</div>
           <div class="alert-status-text" id="alertText" style="color:var(--ok)">NORMAL</div>
           <div class="alert-status-sub" id="alertSub">All meters within thresholds</div>
+        </div>
+        <div class="action-row">
+          <button class="action-btn btn-recheck" onclick="recheckLimit()">🔄 Recheck / Clear Alert</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">🚰 Relay / Valve Control</div>
+        <div class="relay-status-row">
+          <div class="relay-status-label">Current Valve State</div>
+          <div class="relay-status-pill pill-unknown" id="relayPill">UNKNOWN</div>
+        </div>
+        <div class="action-row">
+          <button class="action-btn btn-block" onclick="setRelay(0)">⛔ Block Valve</button>
+          <button class="action-btn btn-open" onclick="setRelay(1)">✅ Open Valve</button>
         </div>
       </div>
 
@@ -615,11 +683,11 @@ let latest = { flowRate: 0, totalLiters: 0, water2: 0 };
 db.ref("/live/flowRate").on("value", snap => {
   const v = snap.val() ?? 0;
   latest.flowRate = v;
-  
+
   const displayVal = typeof v === 'number' ? v.toFixed(1) : v;
   document.getElementById('water').textContent = displayVal;
   document.getElementById('mList1').textContent = displayVal;
-  
+
   const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   pushData(mainChart, t, v);
   pushMulti(t, latest.flowRate, latest.totalLiters, latest.water2);
@@ -629,7 +697,7 @@ db.ref("/live/flowRate").on("value", snap => {
 db.ref("/live/totalLiters").on("value", snap => {
   const v = snap.val() ?? 0;
   latest.totalLiters = v;
-  
+
   const displayVal = typeof v === 'number' ? v.toFixed(3) : v;
   document.getElementById('water1').textContent = displayVal;
   document.getElementById('mList2').textContent = displayVal;
@@ -684,6 +752,59 @@ db.ref("/alert/status").on("value", snap => {
     sub.textContent   = 'All sensor structures report nominal volume thresholds';
   }
 });
+
+/* ── Relay / Valve Status Listener ──
+   Reflects the relay's actual reported state. If your firmware writes
+   its relay state back to Firebase (e.g. "/live/relayState": 1 = open,
+   0 = blocked), this pill will stay in sync automatically. */
+db.ref("/live/relayState").on("value", snap => {
+  const v = snap.val();
+  const pill = document.getElementById('relayPill');
+  if (v === 1) {
+    pill.textContent = 'OPEN';
+    pill.className = 'relay-status-pill pill-open';
+  } else if (v === 0) {
+    pill.textContent = 'BLOCKED';
+    pill.className = 'relay-status-pill pill-block';
+  } else {
+    pill.textContent = 'UNKNOWN';
+    pill.className = 'relay-status-pill pill-unknown';
+  }
+});
+
+/* ── Manual Relay Control ──
+   Writes a command to "/control/relay". The ESP32 firmware polls this
+   path every ~2s and applies it. Manual OPEN is only honored by the
+   firmware if usage is currently under the limit — otherwise use the
+   Recheck button, which also rebases the usage counter. */
+function setRelay(state) {
+  db.ref('/control/relay').set(state ? 1 : 0)
+    .then(() => {
+      addFeedItem(
+        state ? 'Manual command: OPEN VALVE sent' : 'Manual command: BLOCK VALVE sent',
+        state ? 'var(--ok)' : 'var(--danger)'
+      );
+    })
+    .catch(err => {
+      addFeedItem('Relay command failed: ' + err.message, 'var(--danger)');
+    });
+}
+
+/* ── Recheck / Clear Alert ──
+   Clears the alert flag in Firebase so the dashboard shows NORMAL again.
+   Note: the ESP32 firmware currently locks itself in an infinite loop
+   once the limit trips, so clearing this flag alone won't resume the
+   device — it also needs a hardware reset or firmware logic that polls
+   this flag and breaks out of the loop when it's cleared. */
+function recheckLimit() {
+  db.ref('/control/reset').set(1)
+    .then(() => {
+      addFeedItem('Recheck command sent — device will reopen the valve', 'var(--accent)');
+    })
+    .catch(err => {
+      addFeedItem('Recheck failed: ' + err.message, 'var(--danger)');
+    });
+}
 
 /* ── Event Feed Injection Module ── */
 function addFeedItem(msg, color) {
