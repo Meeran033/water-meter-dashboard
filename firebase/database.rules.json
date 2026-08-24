@@ -1,0 +1,211 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "live": {
+      ".read": true,
+      ".write": "auth != null",
+      "flowRate": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "totalLiters": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "relayState": {
+        ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1)"
+      },
+      "Water2": {
+        ".validate": "newData.isNumber()"
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
+    "settings": {
+      ".read": true,
+      "limit": {
+        ".write": "auth != null",
+        ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100000"
+      },
+      "pulsesPerLiter": {
+        ".write": "auth != null",
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      },
+      "flowCalibration": {
+        ".write": "auth != null",
+        ".validate": "newData.isNumber() && newData.val() > 0"
+      },
+      "pricePerLiter": {
+        ".write": "auth != null",
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "serviceCharge": {
+        ".write": "auth != null",
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "companyName": {
+        ".write": "auth != null",
+        ".validate": "newData.isString() && newData.val().length <= 100"
+      },
+      "$other": {
+        ".write": false
+      }
+    },
+    "customer": {
+      ".read": true,
+      ".write": "auth != null",
+      "name": {
+        ".validate": "newData.isString() && newData.val().length <= 100"
+      },
+      "accountNumber": {
+        ".validate": "newData.isString() && newData.val().length <= 40"
+      },
+      "email": {
+        ".validate": "newData.isString() && newData.val().matches(/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/)"
+      },
+      "address": {
+        ".validate": "newData.isString() && newData.val().length <= 200"
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
+    "billing": {
+      ".read": true,
+      ".write": "auth != null",
+      "previousReading": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "currentReading": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "usage": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "limit": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "amount": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "waterCharge": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "serviceCharge": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "billingMonth": {
+        ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}$/)"
+      },
+      "status": {
+        ".validate": "newData.isString() && (newData.val() === 'active' || newData.val() === 'invoiced' || newData.val() === 'closed')"
+      },
+      "lastResetAt": {
+        ".validate": "newData.isString()"
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
+    "control": {
+      ".read": true,
+      "relay": {
+        ".write": true,
+        ".validate": "newData.isNumber() && (newData.val() === -1 || newData.val() === 0 || newData.val() === 1)"
+      },
+      "reset": {
+        ".write": true,
+        ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1)"
+      },
+      "$other": {
+        ".write": false
+      }
+    },
+    "alert": {
+      ".read": true,
+      ".write": "auth != null",
+      "status": {
+        ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1)"
+      },
+      "emailSent": {
+        ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1)"
+      },
+      "lastTriggeredAt": {
+        ".validate": "newData.isString()"
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
+    "history": {
+      ".read": true,
+      "$year": {
+        "$month": {
+          "$day": {
+            "$time": {
+              ".write": "auth != null",
+              "totalLiters": {
+                ".validate": "newData.isNumber()"
+              },
+              "flowRate": {
+                ".validate": "newData.isNumber()"
+              },
+              "meterReading": {
+                ".validate": "newData.isNumber()"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "monthly": {
+      ".read": true,
+      "$year": {
+        "$month": {
+          ".write": "auth != null",
+          "totalLiters": {
+            ".validate": "newData.isNumber()"
+          },
+          "meterReading": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "invoices": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "createdAt",
+        "billingMonth"
+      ],
+      "$invoiceId": {
+        ".write": "auth != null",
+        "invoiceNumber": {
+          ".validate": "newData.isString()"
+        },
+        "billingMonth": {
+          ".validate": "newData.isString()"
+        },
+        "usage": {
+          ".validate": "newData.isNumber()"
+        },
+        "total": {
+          ".validate": "newData.isNumber()"
+        },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'unpaid' || newData.val() === 'paid')"
+        }
+      }
+    },
+    "device": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}

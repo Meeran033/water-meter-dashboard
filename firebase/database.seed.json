@@ -1,0 +1,46 @@
+{
+  "settings": {
+    "limit": 1000,
+    "pricePerLiter": 0.05,
+    "serviceCharge": 100,
+    "pulsesPerLiter": 450,
+    "flowCalibration": 7.5,
+    "companyName": "SLT Nebula Water Services"
+  },
+  "customer": {
+    "name": "Example Customer",
+    "accountNumber": "WM-0001",
+    "email": "customer@example.com",
+    "address": "Colombo, Sri Lanka"
+  },
+  "live": {
+    "flowRate": 0,
+    "totalLiters": 0,
+    "relayState": 1,
+    "Water2": 1
+  },
+  "billing": {
+    "previousReading": 0,
+    "currentReading": 0,
+    "usage": 0,
+    "limit": 1000,
+    "amount": 0,
+    "waterCharge": 0,
+    "serviceCharge": 100,
+    "billingMonth": "2026-08",
+    "status": "active",
+    "lastResetAt": ""
+  },
+  "control": {
+    "relay": -1,
+    "reset": 0
+  },
+  "alert": {
+    "status": 0,
+    "emailSent": 0,
+    "lastTriggeredAt": ""
+  },
+  "invoices": {},
+  "history": {},
+  "monthly": {}
+}

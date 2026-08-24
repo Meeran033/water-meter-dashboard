@@ -1,0 +1,19 @@
+# Credentials — never commit
+esp32/smart_water_meter/secrets.h
+
+# Arduino build artifacts
+*.bin
+*.elf
+*.map
+build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Firebase Cloud Functions local config
+firebase/functions/node_modules/
+firebase/functions/.env
+.firebaserc.local
