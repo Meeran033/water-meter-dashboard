@@ -151,7 +151,8 @@ exports.generateInvoice = onValueWritten(
   { ref: "/billing/status", instance: RTDB_INSTANCE, region: RTDB_REGION },
   async (event) => {
     const newStatus = event.data.after.val();
-    if (newStatus !== "invoiced") return null;
+    const previousStatus = event.data.before.val();
+    if (newStatus !== "invoiced" || previousStatus === "invoiced") return null;
 
     const [billingSnap, customerSnap, settingsSnap] = await Promise.all([
       db.ref("/billing").get(),
@@ -164,6 +165,18 @@ exports.generateInvoice = onValueWritten(
 
     const billingMonth = billing.billingMonth || new Date().toISOString().slice(0, 7);
     const year = billingMonth.split("-")[0];
+
+    // Claim this billing cycle before allocating an invoice number. Retries
+    // or concurrent status writes must not send duplicate invoices.
+    const invoiceLockRef = db.ref(`/_meta/invoiceByMonth/${billingMonth}`);
+    const lockResult = await invoiceLockRef.transaction(current => current || {
+      status: "processing",
+      claimedAt: new Date().toISOString(),
+    });
+    if (!lockResult.committed) {
+      console.log(`[invoice] ${billingMonth} is already being processed`);
+      return null;
+    }
 
     // Sequential invoice number per year: INV-YYYY-0001, kept in a counter
     // node OUTSIDE /invoices so it never shows up when the dashboard lists

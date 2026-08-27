@@ -20,6 +20,12 @@
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
     }
+    /* Hidden until auth-guard.js confirms a signed-in user, so an
+       unauthenticated visitor never sees a flash of dashboard data
+       before the redirect to login.html fires. login.html overrides
+       this back to visible since it has no guard to wait for. */
+    body { visibility: hidden; }
+    body.authed, body.no-guard { visibility: visible; }
 
     /* ── TOP NAV ── */
     nav {
@@ -52,6 +58,75 @@
     .dot.dot-warn { background: var(--warn); }
     .dot.dot-danger { background: var(--danger); animation: pulse 1s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+    .nav-user {
+      display: flex; align-items: center; gap: 10px;
+      padding-left: 16px; border-left: 1px solid var(--border);
+    }
+    #navUserEmail { font-size: 12px; color: var(--muted); }
+    .signout-btn {
+      font-size: 11px; font-weight: 600; letter-spacing: .3px;
+      padding: 6px 12px; border-radius: 7px;
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border); cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .signout-btn:hover { background: var(--card); border-color: var(--accent); }
+
+    /* ── LOGIN PAGE ── */
+    .login-wrapper {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      width: 100%; max-width: 380px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 36px 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .login-logo {
+      font-size: 32px; text-align: center; margin-bottom: 8px;
+    }
+    .login-title {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px;
+      text-align: center; margin-bottom: 4px;
+    }
+    .login-sub {
+      font-size: 12px; color: var(--muted); text-align: center;
+      letter-spacing: .5px; margin-bottom: 28px;
+    }
+    .login-field { margin-bottom: 16px; }
+    .login-field label {
+      display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px;
+    }
+    .login-field input {
+      width: 100%; padding: 11px 13px; border-radius: 9px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
+      outline: none; transition: border-color .15s ease;
+    }
+    .login-field input:focus { border-color: var(--accent); }
+    .login-btn {
+      width: 100%; padding: 12px; margin-top: 6px;
+      border: none; border-radius: 9px; cursor: pointer;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      color: #06121f; font-weight: 700; font-size: 14px;
+      transition: opacity .15s ease;
+    }
+    .login-btn:hover { opacity: .9; }
+    .login-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .login-error {
+      display: none; margin-top: 14px; padding: 10px 12px;
+      background: rgba(255,59,92,.1); border: 1px solid rgba(255,59,92,.3);
+      border-radius: 8px; color: var(--danger); font-size: 12px;
+    }
+    .login-error.show { display: block; }
+    .login-switch {
+      text-align: center; margin-top: 18px;
+      font-size: 12px; color: var(--muted);
+    }
+    .login-switch a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .login-switch a:hover { text-decoration: underline; }
 
     /* ── LAYOUT ── */
     .wrapper { max-width: 1400px; margin: 0 auto; padding: 28px 24px; }

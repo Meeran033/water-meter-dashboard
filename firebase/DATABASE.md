@@ -211,9 +211,9 @@ firebase deploy --only functions --project esp32-69fc8
 | `/settings` | ✅ | ❌ | ESP32 / admin only; validated ranges |
 | `/customer` | ✅ | ❌ | Schema-locked; email format validated |
 | `/billing` | ✅ | ❌ | ESP32 writes usage; Cloud Functions write amounts + status |
-| `/control/*` | ✅ | ✅ | Dashboard valve/reset commands; values validated (`relay` ∈ {-1,0,1}, `reset` ∈ {0,1}) |
+| `/control/*` | ✅ | ❌ (verified email required) | Dashboard valve/reset commands; values validated (`relay` ∈ {-1,0,1}, `reset` ∈ {0,1}) |
 | `/alert` | ✅ | ❌ | ESP32 + Cloud Functions |
-| `/invoices` | ❌ | ❌ | Auth required; Cloud Functions write via Admin SDK (bypasses rules) |
+| `/invoices` | ❌ (verified email required) | ❌ | Cloud Functions write via Admin SDK (bypasses rules) |
 | `/_meta/*` | ❌ | ❌ | Cloud Functions only (invoice counter) — no client rule needed, Admin SDK bypasses rules |
 
-**Important:** `/control` is intentionally writable from the dashboard without login for the pilot demo — `.validate` rules constrain it to the exact expected values so this can't be abused for arbitrary writes. For production, add Firebase Authentication to the dashboard.
+**Note:** `/control` writes and `/invoices` reads require `auth != null && auth.token.email_verified == true` — not just any signed-in account. Registration is open (see README "Dashboard Login"), so this stricter check exists specifically so a freshly self-registered, unverified account can't act on the system just by calling the Firebase SDK directly, even if it bypasses the dashboard's own UI redirect. Everything else that requires auth (`/customer`, `/billing`, `/settings`, `/alert`, `/history`, `/monthly`) stays at the looser `auth != null`, since those are written by the ESP32's own account, which can't click an email verification link.

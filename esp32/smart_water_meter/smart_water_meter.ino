@@ -71,6 +71,7 @@ const char *PREFS_NS = "watermeter";
 // ── Flow sensor ───────────────────────────────────────────────────────────
 volatile unsigned long pulseCount  = 0;
 unsigned long totalPulses          = 0;
+portMUX_TYPE pulseMux = portMUX_INITIALIZER_UNLOCKED;
 
 float flowRate         = 0.0f;
 float totalLiters      = 0.0f;   // raw lifetime meter reading
@@ -95,7 +96,9 @@ bool firebaseReady = false;
 
 // ── Interrupt handler ─────────────────────────────────────────────────────
 void IRAM_ATTR pulseCounter() {
+  portENTER_CRITICAL_ISR(&pulseMux);
   pulseCount++;
+  portEXIT_CRITICAL_ISR(&pulseMux);
 }
 
 // ── NVS helpers ───────────────────────────────────────────────────────────
@@ -587,8 +590,10 @@ void setup() {
 
 // ── Main loop ─────────────────────────────────────────────────────────────
 void loop() {
+  portENTER_CRITICAL(&pulseMux);
   unsigned long intervalPulses = pulseCount;
   pulseCount = 0;
+  portEXIT_CRITICAL(&pulseMux);
 
   delay(1000);
 
