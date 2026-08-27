@@ -11,7 +11,7 @@
    product — it's a reasonable floor for a single-customer pilot. */
 
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_FIREBASE_WEB_API_KEY_HERE",
+  apiKey: "AIzaSyB-El42D6IHlBAmZA8Rf72l2-D09qjq_F4",
   databaseURL: "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 firebase.initializeApp(firebaseConfig);
