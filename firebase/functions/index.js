@@ -132,15 +132,49 @@ exports.calculateBillingAmount = onValueWritten(
     const settings = settingsSnap.val() || {};
     const billing = billingSnap.val() || {};
 
-    const pricePerLiter = Number(settings.pricePerLiter ?? 0);
-    const serviceCharge = Number(billing.serviceCharge ?? settings.serviceCharge ?? 0);
-    const waterCharge = Number((usage * pricePerLiter).toFixed(2));
-    const amount = Number((waterCharge + serviceCharge).toFixed(2));
+    // NWSDB Domestic household tariff — litre-based rates
+    let pricePerLiter;
 
-    await db.ref("/billing").update({ waterCharge, amount, serviceCharge });
-    return null;
-  }
-);
+    if (usage <= 5000) {
+      pricePerLiter = 0.06;
+    } else if (usage <= 10000) {
+      pricePerLiter = 0.08;
+    } else if (usage <= 15000) {
+      pricePerLiter = 0.10;
+    } else if (usage <= 20000) {
+      pricePerLiter = 0.11;
+    } else if (usage <= 25000) {
+      pricePerLiter = 0.13;
+    } else if (usage <= 30000) {
+      pricePerLiter = 0.16;
+    } else if (usage <= 40000) {
+      pricePerLiter = 0.18;
+    } else if (usage <= 50000) {
+      pricePerLiter = 0.21;
+    } else if (usage <= 75000) {
+      pricePerLiter = 0.24;
+    } else if (usage <= 100000) {
+      pricePerLiter = 0.27;
+    } else {
+      pricePerLiter = 0.30;
+    }
+
+    const serviceCharge = Number(
+      billing.serviceCharge ?? settings.serviceCharge ?? 0
+    );
+
+    const waterCharge = Number(
+      (usage * pricePerLiter).toFixed(2)
+    );
+
+    const amount = Number(
+      (waterCharge + serviceCharge).toFixed(2)
+    );
+
+        await db.ref("/billing").update({ waterCharge, amount, serviceCharge });
+        return null;
+      }
+    );
 
 // ── Phase 10: Invoice generation + email ───────────────────────────────────
 // Fires when /billing/status transitions to "invoiced" (set either by the
@@ -201,7 +235,18 @@ exports.generateInvoice = onValueWritten(
       previousReading: Number(billing.previousReading ?? 0),
       currentReading: Number(billing.currentReading ?? 0),
       usage: Number(billing.usage ?? 0),
-      rate: Number(settings.pricePerLiter ?? 0),
+      rate: Number(
+        billing.usage <= 5000 ? 0.06 :
+        billing.usage <= 10000 ? 0.08 :
+        billing.usage <= 15000 ? 0.10 :
+        billing.usage <= 20000 ? 0.11 :
+        billing.usage <= 25000 ? 0.13 :
+        billing.usage <= 30000 ? 0.16 :
+        billing.usage <= 40000 ? 0.18 :
+        billing.usage <= 50000 ? 0.21 :
+        billing.usage <= 75000 ? 0.24 :
+        billing.usage <= 100000 ? 0.27 : 0.30
+      ),
       waterCharge,
       serviceCharge,
       total,
