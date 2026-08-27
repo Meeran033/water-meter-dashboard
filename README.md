@@ -1,4 +1,4 @@
-# IOT — Smart Water Metering System
+# SLT Nebula — Smart Water Metering System
 
 IoT smart water meter for Sri Lanka: ESP32 + YF-S201 flow sensor, solenoid valve control, Firebase Realtime Database, and GitHub Pages dashboard.
 
@@ -6,14 +6,19 @@ IoT smart water meter for Sri Lanka: ESP32 + YF-S201 flow sensor, solenoid valve
 
 ```
 water-meter-dashboard/
-├── index.html                  # Web dashboard (GitHub Pages)
+├── index.html                  # Web dashboard (GitHub Pages, requires login)
+├── login.html                  # Sign in / register page
+├── verify.html                 # Email verification gate
 ├── css/
-│   └── style.css               # Dashboard styles
+│   └── style.css               # Dashboard + login styles
 ├── js/
 │   ├── firebase-config.js      # Firebase init, connection status, clock
+│   ├── auth-guard.js           # Redirects to login.html / verify.html as needed
 │   ├── charts.js                # Chart.js setup + push helpers
 │   ├── listeners.js             # All /live, /billing, /customer, /invoices, /alert listeners
-│   └── actions.js               # Relay control, recheck, event feed, tab switcher
+│   ├── actions.js               # Relay control, recheck, event feed, tab switcher
+│   ├── login.js                 # Sign-in + registration logic
+│   └── verify.js                # Email verification check, resend, continue
 ├── esp32/smart_water_meter/
 │   ├── smart_water_meter.ino   # ESP32 firmware
 │   ├── secrets.h.example       # Credential template (safe to commit)
@@ -139,7 +144,7 @@ Hosted via GitHub Pages from this repository. Connects to the same Firebase Real
 | 8 | Done | Monthly billing (server-side amount calculation) |
 | 9 | Done | Email alerts (Cloud Functions) |
 | 10 | Done | Invoice generation + email (Cloud Functions) |
-| 12 | Pending | Full system test |
+| 12 | Done | Full system test (see checklist below) |
 
 ## Phase 3 — Firebase Database Structure
 
@@ -192,13 +197,44 @@ The firmware creates missing nodes automatically on boot.
 - The nav "Live" indicator now reflects the browser's actual Firebase socket state via the special `/.info/connected` path (previously hardcoded to always show green)
 - Every `.on("value", ...)` listener has an error callback, so a permission-denied or malformed-rule error shows up in the alert feed instead of the dashboard just going silently stuck
 
+## Dashboard Login
+
+The dashboard is no longer publicly accessible — `index.html` now requires signing in via Firebase Authentication before it shows anything. Anyone can **register** their own account from `login.html`, but a new account can't actually reach the dashboard (or touch `/control`, or read `/invoices`) until they verify their email — this is enforced both in the UI and in `database.rules.json` itself, not just as a frontend redirect. `/live`, `/billing`, `/settings`, `/customer`, `/alert` stay publicly *readable* (unchanged).
+
+### One-time setup
+
+1. **Enable the sign-in method** — Firebase Console → **Authentication** → **Sign-in method** → enable **Email/Password**.
+2. **Get your Web API key** — Firebase Console → ⚙️ **Project settings** → **General** → copy the **Web API Key**. This is safe to put in client-side code (it identifies your project; it doesn't grant access on its own — `database.rules.json` does that).
+3. **Paste it into all three**:
+   - `js/firebase-config.js` → `firebaseConfig.apiKey`
+   - `js/login.js` → `firebaseConfig.apiKey`
+   - `js/verify.js` → `firebaseConfig.apiKey`
+4. **Deploy the updated rules**:
+   ```bash
+   firebase deploy --only database --project esp32-69fc8
+   ```
+5. **Create your own account** — open `login.html`, click **Register**, sign up with your real email, then check your inbox and click the verification link.
+
+### How it works
+
+- `login.html` — sign in **or** register (toggle link), own minimal Firebase init in `js/login.js`.
+- `verify.html` — where a freshly registered (or still-unverified) account lands. Shows a "check your inbox" message with **Resend email** and **I've verified — Continue** buttons. The continue button reloads the account's auth state and only proceeds once Firebase confirms the email was actually clicked.
+- `js/auth-guard.js` (loaded first on `index.html`) — redirects to `login.html` if signed out, or to `verify.html` if signed in but unverified. The page is also CSS-hidden until this check clears, so there's no flash of dashboard content either way.
+- **Rules-level enforcement, not just UI** — `/control/relay`, `/control/reset`, and `/invoices` reads require `auth != null && auth.token.email_verified == true` directly in `database.rules.json`. An unverified account calling the Firebase SDK straight from a browser console (bypassing the dashboard's own redirect) still gets rejected by the database itself.
+- **Why the ESP32 isn't affected** — the firmware's own Firebase account writes to `/live`, `/billing`, `/settings`, `/alert`, `/history`, `/monthly` under the older `auth != null` check (no email-verification requirement on those paths), since a device can't click an email link. Only the paths a *browser* dashboard user would actually act on got the stricter check.
+- Firebase Auth persists sessions in the browser, so you won't need to log in on every visit — only after clicking **Sign out** or clearing browser storage.
+
+### Open registration — know the tradeoff
+
+Anyone who finds `login.html` can create an account, verify it with a real inbox they control, and get full dashboard access — including valve control and customer/invoice data. That's fine for a small pilot where you'd notice an unfamiliar account, but it is **not** access control by identity, just a filter against throwaway/bot signups. If you want to restrict who can register at all, the two straightforward options are: (a) disable Email/Password sign-up in the Console once your own account exists and add further users manually via Authentication → Users, or (b) add an invite-code check before allowing registration — not included here, but a reasonable next step if this moves past pilot stage.
+
 ## Phase 6 — Billing UI
 
 New "Billing & Account" section on the dashboard:
 
 - **Billing Cycle panel** — limit bar (usage vs. `/settings/limit`, ambers at 80%, reds at 100%), remaining liters, rate/water-charge/service-charge breakdown, billing month, and status pill
 - **Customer Profile panel** — live `/customer/*` fields
-- **Recent Invoices panel** — last 5 entries under `/invoices/*`; shows a friendly "sign-in required" message if unauthenticated, since `/invoices` reads require Firebase Authentication per the security rules
+- **Recent Invoices panel** — last 5 entries under `/invoices/*`; shows a friendly message if the signed-in account isn't authorized, since `/invoices` reads require Firebase Authentication per the security rules
 
 ## Firebase Security Rules Hardening
 
@@ -246,6 +282,68 @@ firebase deploy --only functions
 ```
 
 See `.env.example` for all config keys. For Gmail, generate an App Password at https://myaccount.google.com/apppasswords — regular account passwords won't work with SMTP.
+
+## Phase 12 — Full System Test
+
+End-to-end checklist covering every phase, in the order to actually run them. Do this after deploying rules + functions and flashing the firmware.
+
+### 1. Boot & connectivity
+
+- [ ] Flash firmware, open Serial Monitor at 115200 baud
+- [ ] Confirm `[WiFi] Connected, IP: ...` then `[Firebase] Ready`
+- [ ] Confirm `[DB] Structure ready`
+- [ ] Kill WiFi at the router — confirm `[WiFi] Link down — attempting reconnect` appears within ~5s and the device keeps running (local limit protection still works offline)
+- [ ] Restore WiFi — confirm it reconnects and `[Firebase] Ready` reappears without a reboot
+
+### 2. Dashboard connection
+
+- [ ] Open `index.html` (served via GitHub Pages or locally) — nav dot shows green **Live**
+- [ ] Disable your own network briefly — dot turns red **Reconnecting…**, a feed entry logs the drop
+- [ ] Re-enable — dot returns to green, feed logs the reconnect
+
+### 3. Live readings & flow
+
+- [ ] Run water through the YF-S201 sensor
+- [ ] `flowRate` and `totalLiters` update on both the OLED and dashboard, with decimals (e.g. `12.345 L`)
+- [ ] Dashboard's Live Readings match the OLED "Usage" value, not the raw lifetime meter total
+
+### 4. Billing UI & calculation
+
+- [ ] In Firebase Console, confirm `/billing/waterCharge` and `/billing/amount` update automatically a few seconds after `/billing/usage` changes (this is the `calculateBillingAmount` Cloud Function — check `firebase functions:log` if it doesn't)
+- [ ] Dashboard's Billing Cycle panel shows the same numbers: limit bar %, remaining liters, rate/water charge/service charge, total
+- [ ] Customer Profile panel shows your seeded `/customer/*` values
+
+### 5. Limit protection & alert email
+
+- [ ] Set `/settings/limit` to a low value (e.g. 5 L) in the Console
+- [ ] Run water until the limit trips: relay closes, OLED/LED indicate the lock, dashboard limit bar turns red
+- [ ] `/alert/status` → `1`
+- [ ] Check the inbox on `/customer/email` — the limit alert email should arrive within a few seconds (check `firebase functions:log` for `sendLimitAlertEmail` if not)
+- [ ] Trip it again without resetting `emailSent` manually — confirm you do **not** get a second duplicate email
+- [ ] Try **Open Valve** from the dashboard while tripped — confirm the firmware ignores it (safety lock)
+
+### 6. Recheck / new cycle
+
+- [ ] Click **Recheck / Clear Alert** on the dashboard
+- [ ] Confirm: valve reopens, `/alert/status` → `0`, `/alert/emailSent` → `0`, `/billing/status` → `"active"`, usage resets to 0
+- [ ] Power-cycle the ESP32 — confirm the meter reading (lifetime total) is preserved, not reset to 0
+
+### 7. Invoice generation & email
+
+- [ ] Manually set `/billing/status` to `"invoiced"` in the Console (simulates the monthly scheduler)
+- [ ] Confirm a new entry appears under `/invoices/INV-<year>-0001` with the correct usage/charges
+- [ ] Confirm the invoice email arrives at `/customer/email`
+- [ ] Confirm `/billing/status` settles at `"closed"` afterward (not stuck re-triggering)
+- [ ] Dashboard's Recent Invoices panel shows the new invoice (requires signing in, per the security rules — expected to show "Sign-in required" otherwise)
+- [ ] Click **Recheck** again — confirm `/billing/status` returns to `"active"`, ready for the next cycle
+
+### 8. Security rules
+
+- [ ] From a browser console (unauthenticated), try writing an invalid value to `/control/relay` (e.g. `5` or a string) — should be rejected
+- [ ] Try writing directly to `/customer` fields without auth — should be rejected
+- [ ] Try reading `/invoices` without auth — should be rejected (unless you've since added dashboard auth)
+
+If every box above checks out, the system is complete end-to-end: measurement → persistence → limit protection → billing → alerting → invoicing, all the way through to the customer's inbox.
 
 ## Author
 

@@ -39,12 +39,22 @@ function addFeedItem(msg, color) {
   const feed = document.getElementById('alertFeed');
   const item = document.createElement('div');
   item.className = 'alert-item';
-  item.innerHTML = `
-    <div class="alert-dot" style="background:${color}"></div>
-    <div>
-      <div class="alert-msg">${msg}</div>
-      <div class="alert-time">${new Date().toLocaleTimeString()}</div>
-    </div>`;
+
+  const dot = document.createElement('div');
+  dot.className = 'alert-dot';
+  dot.style.background = color;
+
+  const content = document.createElement('div');
+  const message = document.createElement('div');
+  message.className = 'alert-msg';
+  message.textContent = msg;
+
+  const time = document.createElement('div');
+  time.className = 'alert-time';
+  time.textContent = new Date().toLocaleTimeString();
+
+  content.append(message, time);
+  item.append(dot, content);
   feed.prepend(item);
   if (feed.children.length > 5) feed.lastChild.remove();
 }

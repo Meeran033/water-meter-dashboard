@@ -159,24 +159,43 @@ db.ref('/invoices').limitToLast(5).on('value', snap => {
     return;
   }
 
-  invoiceList.innerHTML = invoices.map(inv => {
+  invoiceList.replaceChildren(...invoices.map(inv => {
     const total = Number(inv.total ?? 0).toFixed(2);
     const status = (inv.status || 'unpaid').toLowerCase();
-    return `
-      <div class="invoice-row">
-        <div class="invoice-row-top">
-          <span class="invoice-num">${inv.invoiceNumber || inv.id}</span>
-          <span class="bill-status-pill ${status === 'paid' ? 'status-paid' : 'status-unpaid'}">${status}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span class="invoice-month">${inv.billingMonth || ''}</span>
-          <span class="invoice-amount">Rs. ${total}</span>
-        </div>
-      </div>`;
-  }).join('');
+
+    const row = document.createElement('div');
+    row.className = 'invoice-row';
+
+    const top = document.createElement('div');
+    top.className = 'invoice-row-top';
+
+    const number = document.createElement('span');
+    number.className = 'invoice-num';
+    number.textContent = inv.invoiceNumber || inv.id;
+
+    const statusLabel = document.createElement('span');
+    statusLabel.className = `bill-status-pill ${status === 'paid' ? 'status-paid' : 'status-unpaid'}`;
+    statusLabel.textContent = status;
+    top.append(number, statusLabel);
+
+    const details = document.createElement('div');
+    details.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+
+    const month = document.createElement('span');
+    month.className = 'invoice-month';
+    month.textContent = inv.billingMonth || '';
+
+    const amount = document.createElement('span');
+    amount.className = 'invoice-amount';
+    amount.textContent = `Rs. ${total}`;
+    details.append(month, amount);
+
+    row.append(top, details);
+    return row;
+  }));
 }, err => {
   if (err.code === 'PERMISSION_DENIED') {
-    invoiceList.innerHTML = '<div class="invoice-empty">Sign-in required to view invoices (coming in Phase 10)</div>';
+    invoiceList.innerHTML = '<div class="invoice-empty">Your account isn\'t authorized to view invoices</div>';
   } else {
     invoiceList.innerHTML = '<div class="invoice-empty">Failed to load invoices</div>';
     addFeedItem(`Invoices read failed: ${err.message}`, 'var(--danger)');

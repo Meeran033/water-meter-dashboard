@@ -1,9 +1,17 @@
-/* ── Firebase Config ── */
+/* ── Firebase Config ──
+   NOTE: apiKey is required for Firebase Authentication to work (the
+   RTDB alone doesn't need it, but signInWithEmailAndPassword does).
+   Firebase Web API keys are safe to embed in client-side code — they
+   only identify your project, they don't grant access on their own.
+   Actual access is controlled by your database.rules.json. Get this
+   value from Firebase Console → Project settings → General → Web API Key. */
 const firebaseConfig = {
+  apiKey: "PASTE_YOUR_FIREBASE_WEB_API_KEY_HERE",
   databaseURL: "https://esp32-69fc8-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
 
 /* ── Phase 5: Real Connection Status (was hardcoded "Live" before) ──
    Firebase exposes a special client-side path, /.info/connected, that

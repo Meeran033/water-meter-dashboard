@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — SLT Nebula Smart Water Metering System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="no-guard">
+
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-logo">💧</div>
+    <div class="login-title">SLT Nebula</div>
+    <div class="login-sub">SMART WATER METERING · SIGN IN</div>
+
+    <form id="loginForm">
+      <div class="login-field">
+        <label for="email">Email</label>
+        <input type="email" id="email" autocomplete="username" required />
+      </div>
+      <div class="login-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+      <div class="login-switch">
+        Don't have an account? <a href="#" id="showRegister">Register</a>
+      </div>
+    </form>
+
+    <form id="registerForm" style="display:none;">
+      <div class="login-field">
+        <label for="regEmail">Email</label>
+        <input type="email" id="regEmail" autocomplete="username" required />
+      </div>
+      <div class="login-field">
+        <label for="regPassword">Password</label>
+        <input type="password" id="regPassword" autocomplete="new-password" minlength="6" required />
+      </div>
+      <div class="login-field">
+        <label for="regPasswordConfirm">Confirm password</label>
+        <input type="password" id="regPasswordConfirm" autocomplete="new-password" minlength="6" required />
+      </div>
+      <button type="submit" class="login-btn" id="registerBtn">Create Account</button>
+      <div class="login-error" id="registerError"></div>
+      <div class="login-switch">
+        Already have an account? <a href="#" id="showLogin">Sign in</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/login.js"></script>
+</body>
+</html>

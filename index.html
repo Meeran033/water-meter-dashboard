@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>IoT Smart Water Metering System</title>
+  <title>SLT Nebula Smart Water Metering System</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -16,13 +17,17 @@
   <div class="nav-brand">
     <div class="nav-logo">💧</div>
     <div>
-      <div class="nav-title">IoT Smart Water Metering System</div>
+      <div class="nav-title">SLT Nebula Smart Water Metering System</div>
       <div class="nav-sub">IOT MONITORING DASHBOARD · COLOMBO PILOT</div>
     </div>
   </div>
   <div class="nav-right">
     <div class="nav-status" id="navStatus"><div class="dot" id="navDot"></div> <span id="navStatusText">Connecting…</span></div>
     <div class="nav-time" id="navClock">—</div>
+    <div class="nav-user" id="navUser">
+      <span id="navUserEmail"></span>
+      <button id="signOutBtn" class="signout-btn" onclick="handleSignOut()">Sign out</button>
+    </div>
   </div>
 </nav>
 
@@ -329,11 +334,12 @@
 </div>
 
 <footer>
-  IoT Smart Water Metering System · Colombo Pilot · Firebase Realtime Database ·
+  SLT Nebula IoT Smart Water Metering System · Colombo Pilot · Firebase Realtime Database ·
   Thanagopal Sameeran · BTDT/24/54 · HND in Digital Technologies
 </footer>
 
 <script src="js/firebase-config.js"></script>
+<script src="js/auth-guard.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/listeners.js"></script>
 <script src="js/actions.js"></script>
