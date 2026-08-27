@@ -110,11 +110,11 @@
     "control": {
       ".read": true,
       "relay": {
-        ".write": true,
+        ".write": "auth != null && auth.token.email_verified == true",
         ".validate": "newData.isNumber() && (newData.val() === -1 || newData.val() === 0 || newData.val() === 1)"
       },
       "reset": {
-        ".write": true,
+        ".write": "auth != null && auth.token.email_verified == true",
         ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1)"
       },
       "$other": {
@@ -179,7 +179,7 @@
       }
     },
     "invoices": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.email_verified == true",
       ".indexOn": [
         "createdAt",
         "billingMonth"
