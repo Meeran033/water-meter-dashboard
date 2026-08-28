@@ -1,4 +1,4 @@
-# SLT Nebula — Smart Water Metering System
+# IOT — Smart Water Metering System
 
 IoT smart water meter for Sri Lanka: ESP32 + YF-S201 flow sensor, solenoid valve control, Firebase Realtime Database, and GitHub Pages dashboard.
 
