@@ -1,5 +1,5 @@
 /**
- * SLT Nebula — Smart Water Meter Cloud Functions
+ * IOT — Smart Water Meter Cloud Functions
  *
  * Phase 9  — sendLimitAlertEmail:     emails the customer once per limit trip
  * Phase 8  — calculateBillingAmount:  recomputes waterCharge/amount whenever usage changes
@@ -33,7 +33,7 @@ const smtpHost = defineString("SMTP_HOST", { default: "smtp.gmail.com" });
 const smtpPort = defineString("SMTP_PORT", { default: "465" });
 const smtpUser = defineString("SMTP_USER");
 const smtpPass = defineString("SMTP_PASS");
-const fromName = defineString("EMAIL_FROM_NAME", { default: "SLT Nebula Water Services" });
+const fromName = defineString("EMAIL_FROM_NAME", { default: "IOT Smart Water Metering System" });
 
 function getTransporter() {
   return nodemailer.createTransport({
